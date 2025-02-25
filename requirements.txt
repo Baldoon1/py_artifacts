@@ -1,1 +1,3 @@
 logzero  # see github.com/metachris/logzero
+python-dotenv # see github.com/theskumar/python-dotenv
+requests # see requests.readthedocs.io/en/latest/
