@@ -319,9 +319,10 @@ def post_action_gathering(name):
     }
 
     try:
+        check_cooldown(name)
         response = requests.post(url, headers=headers)
         response.raise_for_status()
-        print(response.json())
+        return response.json()
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 486:
             logger.error("An action is already in progress by your character.")
@@ -492,13 +493,17 @@ def check_cooldown(name):
     if cooldown_expiration > now:
         cooldown_seconds = (cooldown_expiration - now).total_seconds()
         logger.warning(f'Character {name} is currently in cooldown. Waiting {cooldown_seconds} seconds.')
-        time.sleep(cooldown_seconds)
+        while cooldown_seconds > 0:
+            logger.info(f'Waiting... {cooldown_seconds} seconds remaining.')
+            time.sleep(5)
+            now = datetime.datetime.now(local_tz)
+            cooldown_seconds = (cooldown_expiration - now).total_seconds()
     else:
         logger.info(f'Character {name} is not in cooldown.')
 
 def main():
     """ Main entry point of the app """
-    post_action_move("Baldoon_01", 0, 1)
+    # post_action_move("Baldoon_01", 2, 0)
     # post_action_fight("Baldoon_01")
     # post_action_rest("Baldoon_01")
     # post_action_gathering("Baldoon_01")
@@ -506,6 +511,14 @@ def main():
     # post_action_crafting("Baldoon_01", "wooden_staff")
     # post_action_equip_item("Baldoon_01", "wooden_staff", "weapon")
 
+    while True:
+        action = post_action_gathering("Baldoon_01")
+        action = action['data']
+        
+        items = action['details']['items']
+
+        for item in items:
+            logger.info(f'Successfully gathered {item["quantity"]} {item["code"]}')
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
