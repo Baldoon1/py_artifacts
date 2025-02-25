@@ -503,7 +503,7 @@ def check_cooldown(name):
 
 def main():
     """ Main entry point of the app """
-    # post_action_move("Baldoon_01", 2, 0)
+    post_action_move("Baldoon_01", 0, 0)
     # post_action_fight("Baldoon_01")
     # post_action_rest("Baldoon_01")
     # post_action_gathering("Baldoon_01")
@@ -511,14 +511,14 @@ def main():
     # post_action_crafting("Baldoon_01", "wooden_staff")
     # post_action_equip_item("Baldoon_01", "wooden_staff", "weapon")
 
-    while True:
-        action = post_action_gathering("Baldoon_01")
-        action = action['data']
+    # while True:
+    #     action = post_action_gathering("Baldoon_01")
+    #     action = action['data']
         
-        items = action['details']['items']
+    #     items = action['details']['items']
 
-        for item in items:
-            logger.info(f'Successfully gathered {item["quantity"]} {item["code"]}')
+    #     for item in items:
+    #         logger.info(f'Successfully gathered {item["quantity"]} {item["code"]}')
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
