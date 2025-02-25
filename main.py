@@ -8,6 +8,9 @@ __license__ = "MIT"
 
 import os
 import requests
+import time
+import datetime
+import pytz
 from logzero import logger
 from dotenv import load_dotenv
 
@@ -190,6 +193,27 @@ def get_all_characters_logs():
     except requests.exceptions.RequestException as e:
         logger.error(f'Request failed: {e}')
 
+def get_character(name):
+    url = f"{BASE_URL}/characters/{name}"
+
+    headers = {
+        "Accept": "application/json",
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return(response.json())
+    except requests.exceptions.HTTPError as e:
+        logger.error(f'HTTP error: {e}')
+
+    except requests.exceptions.ConnectionError:
+        logger.error("There was a connection error.")
+    except requests.exceptions.Timeout:
+        logger.error("Request timed out.")
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Request failed: {e}')
+
 def post_action_move(name, x, y):
     url = f"{BASE_URL}/my/{name}/action/move"
 
@@ -205,9 +229,11 @@ def post_action_move(name, x, y):
     }
 
     try:
+        check_cooldown("Baldoon_01")
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
-        print(response.json())
+        logger.info(f'Successfully moved to {x}, {y}.')
+        return response.json()
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
             logger.error("Map not found.")
@@ -453,9 +479,26 @@ def post_action_equip_item(name, code, slot, quant=1):
     except requests.exceptions.RequestException as e:
         logger.error(f'Request failed: {e}')
 
+def check_cooldown(name):
+    character = get_character(name)
+    character = character["data"]
+
+    cooldown_expiration = character["cooldown_expiration"]
+    cooldown_expiration = datetime.datetime.strptime(cooldown_expiration, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.UTC)
+
+    local_tz = pytz.timezone("America/Los_Angeles")
+    now = datetime.datetime.now(local_tz)
+
+    if cooldown_expiration > now:
+        cooldown_seconds = (cooldown_expiration - now).total_seconds()
+        logger.warning(f'Character {name} is currently in cooldown. Waiting {cooldown_seconds} seconds.')
+        time.sleep(cooldown_seconds)
+    else:
+        logger.info(f'Character {name} is not in cooldown.')
+
 def main():
     """ Main entry point of the app """
-    # post_action_move("Baldoon_01", 2, 1)
+    post_action_move("Baldoon_01", 0, 1)
     # post_action_fight("Baldoon_01")
     # post_action_rest("Baldoon_01")
     # post_action_gathering("Baldoon_01")
